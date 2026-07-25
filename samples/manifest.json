@@ -1,0 +1,30 @@
+{
+  "date": "2026-07-24",
+  "note": "free sample: one real unmodified UTC day (2026-07-24), BTC 5m series + settlement feed + markets + 1m klines",
+  "files": [
+    {
+      "name": "BTCUSDT-feed1-predict-prices-2026-07-24.csv.gz",
+      "rows": 82523,
+      "bytes": 842759,
+      "sha256": "abdff9a9eaee3d724e92dbe9231dd2a05d9ff0658b3f3b05a1ce7a72ba12276b"
+    },
+    {
+      "name": "BTC-5M-predict-orderbook-2026-07-24.jsonl.gz",
+      "rows": 68398,
+      "bytes": 8380982,
+      "sha256": "46f23a970f87791c17759debcef92794630ee9e70d9ce38f41b10da60892d63b"
+    },
+    {
+      "name": "predict-markets-2026-07-24.jsonl.gz",
+      "rows": 1245,
+      "bytes": 70746,
+      "sha256": "f7a9c102efc5ff6739d72e6289f545692b6bf51b13d40112c08582a86d4e7410"
+    },
+    {
+      "name": "BTCUSDT-feed1-1m-2026-07-24.csv.gz",
+      "rows": 1440,
+      "bytes": 20569,
+      "sha256": "92580107b449d778db7f652462c4d51445b0f60a5ba8146ea087fcc51dc1d678"
+    }
+  ]
+}
