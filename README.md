@@ -27,7 +27,10 @@ by range.
 | `klines` | 13 intraday periods (1s..1d) plus 3d / 1w / 1mo full-history snapshots, derived from the price ticks |
 
 - Assets: BTC, ETH, BNB × intervals 5m / 15m / daily
-- History from 2026-06-12, growing daily
+- History from 2026-06-12, growing daily. Note that **2026-06-12 is a partial
+  day** (collection started mid-day; ~66% of the day's seconds) — the **first
+  complete UTC day is 2026-06-13**. Early days also carry fewer ETH/BNB slots,
+  which only had daily markets at the time.
 - Every file ships with row counts + SHA-256 in the manifest, so you can verify
   what you received; the price files carry per-tick timestamps, so feed
   continuity is auditable directly from the data
@@ -95,6 +98,8 @@ unix 秒，间隔分布可直接从样例自行核算。
 价格仅 float64（上游无全精度串）；盘口**只有快照**，上游不发增量，也没有成交
 流水（我们的 Polymarket 数据集两者都有）；逐条 tick 的 `provider` 字段是**混合**
 的，详见说明书——市场层面的结算源 5m/15m 为 `CHAINLINK`、daily 为 `BINANCE`。
+历史起点 2026-06-12，但**该日为部分覆盖日**（当天中途开采，约占全天 66%），
+**首个完整 UTC 日为 2026-06-13**；早期若干天 ETH/BNB 槽位较少（当时只有 daily 市场）。
 
 ## Buy / 购买
 
