@@ -22,7 +22,7 @@ by range.
 | dataset | description |
 |---|---|
 | `prices` | The settlement price feed, tick-by-tick (~1Hz per symbol), with the upstream's own per-tick `provider` attribution and three timestamps |
-| `orderbook` | Full order-book snapshots, up to 1/sec per market |
+| `orderbook` | Full order-book snapshots. Throttled to 1/sec per market through 2026-08-24; **unthrottled from 2026-08-25**, so every snapshot the venue pushed is archived — roughly ten times the detail |
 | `markets` | Per-market metadata with **strike** (`start_price`) and **settlement price** (`end_price`) — every slot's outcome is verifiable from this file alone |
 | `klines` | 13 intraday periods (1s..1d) plus 3d / 1w / 1mo full-history snapshots, derived from the price ticks |
 
@@ -37,54 +37,104 @@ by range.
 
 ## Samples / 样例
 
-**Easiest download: [Releases → samples-v1](https://github.com/Ligengxin96/predict.fun-data-samples/releases/tag/samples-v1)**
-(the same files also live in `samples/` for browsing).
+**[Download the sample bundle](https://github.com/Ligengxin96/predict.fun-data-samples/releases/latest/download/predict-fun-data-samples.tar.gz)**
+— one real, unmodified UTC day (**2026-08-25**) of the BTC 5-minute series plus
+the settlement price feed, the full market/settlement table and one kline period.
 
-One real, unmodified UTC day — **2026-07-24** — of the BTC 5-minute series plus
-the settlement price feed, the full market/settlement table and one kline
-period:
+> **The data is in the Release, not in the git tree.** Clicking *Code → Download
+> ZIP* gets you the documentation and nothing else. This is deliberate: a
+> half-populated archive would replay without errors and give wrong answers, so
+> the repository ships either the whole day or none of it.
+>
+> **数据在 Release 里，不在 git 仓库里。** 点 *Code → Download ZIP* 只会拿到文档。
+> 这是有意的：残缺的归档跑起来不报错却会给出错误结果，所以要么给完整一天，要么不给。
 
-| file | rows | what |
+```bash
+curl -L https://github.com/Ligengxin96/predict.fun-data-samples/releases/latest/download/predict-fun-data-samples.tar.gz | tar xz
+```
+
+It unpacks to `predict-fun-data-samples/`, laid out exactly like the paid
+archive, so it replays directly:
+
+```bash
+# The order book is unthrottled from 2026-08-25 — 679,335 full snapshots in this
+# one day — so give the replay room. The default Node heap is not enough.
+NODE_OPTIONS=--max-old-space-size=8192 ot run . --data ./predict-fun-data-samples
+```
+
+| file (inside the bundle) | rows | what |
 |---|---|---|
-| `BTCUSDT-feed1-predict-prices-2026-07-24.csv.gz` | 82,523 | settlement price ticks |
-| `BTC-5M-predict-orderbook-2026-07-24.jsonl.gz` | 68,398 | order-book snapshots |
-| `predict-markets-2026-07-24.jsonl.gz` | 1,245 | every market that day (all assets and intervals) with strike + settlement price |
-| `BTCUSDT-feed1-1m-2026-07-24.csv.gz` | 1,440 | 1-minute klines (one of 13 periods in the full set) |
+| `data/predict-fun/prices/BTCUSDT/BTCUSDT-feed1-predict-prices-2026-08-25.csv.gz` | 82,568 | settlement price ticks |
+| `data/predict-fun/orderbook/BTC-5M/BTC-5M-predict-orderbook-2026-08-25.jsonl.gz` | 679,335 | order-book snapshots, unthrottled |
+| `data/predict-fun/markets/predict-markets-2026-08-25.jsonl.gz` | 1,245 | every market that day (all assets and intervals) with strike + settlement price |
+| `data/predict-fun/klines/BTCUSDT/1m/BTCUSDT-feed1-1m-2026-08-25.csv.gz` | 1,440 | 1-minute klines (one of 13 periods in the full set) |
+
+This day is the first full one with the order book unthrottled: 679,335
+snapshots against 68,398 on a throttled day, roughly ten times the book detail.
+
+本样例日是盘口不再限流后的第一个完整日：679,335 条快照，而限流时期的日子只有
+68,398 条，盘口细节约为此前的十倍。
+
+Each file is also attached to the Release individually, for anyone who only
+wants one of them. Row counts are data rows (CSV headers excluded); every file
+carries its SHA-256 in [`samples/manifest.json`](samples/manifest.json). Those
+checksums are the archive's own, so a sample verifies byte for byte against a
+delivered bundle.
 
 Field-level documentation: [`DATA_GUIDE.md`](DATA_GUIDE.md) (English) /
 [`数据使用说明.md`](数据使用说明.md) (中文).
 
 ### Verify it yourself / 自行验证
 
-Every settled market in `predict-markets-2026-07-24.jsonl.gz` carries both
-`start_price` (the strike) and `end_price` (the settlement price), so you can
-check the Up/Down outcome directly: **Up wins when `end_price >= start_price`.**
-On 2026-07-24 every 5m and 15m slot of all three assets is present and settled
-(288 five-minute + 96 fifteen-minute slots per asset). The price files let you
-replay the path between the two.
+The venue publishes each market's own `start_price` (the strike) and
+`end_price` (the settlement price). What matters about our data is whether the
+price stream we sell is the one those numbers came from — so that is what this
+check asks: **does our archived tick at those exact seconds reproduce the
+venue's published prices?**
 
-`predict-markets-*.jsonl.gz` 里每个已结算市场都同时带 `start_price`（strike）与
-`end_price`（结算价），可直接核对 Up/Down 结果：**`end_price >= start_price` 时
-Up 赢**。2026-07-24 当天三个资产的 5m / 15m 全部槽位齐全且已结算（每资产 288 个
-5 分钟局 + 96 个 15 分钟局）。价格文件可用于复盘中间过程。
+On 2026-08-25, across the 291 BTC 5-minute markets in the sample:
+
+| | count | result |
+|---|---|---|
+| boundary seconds we hold a tick for | 555 | **555 of 555 reproduce the venue's published price** |
+| boundary seconds absent from our feed | 27 | not independently provable — reported as undetermined |
+
+Prices are compared at the precision the venue itself printed. Our files carry
+the full float64 expansion (`64944.024999999994`), the venue prints the same
+number as `64944.025`; those are one value, not a disagreement.
+
+The venue's own settlement rule is then plain arithmetic on the same file:
+**Up wins when `end_price >= start_price`** — 145 Up and 146 Down that day.
+
+场方为每个市场发布自己的 `start_price`（strike）与 `end_price`（结算价）。对我们的
+数据而言真正要紧的是：**我们卖的这条价格流，是不是它结算时用的那条**。所以这里核对的
+是「我方在那两个精确秒归档的 tick，能否复现场方发布的价格」。
+
+2026-08-25 当天样例中的 291 个 BTC 5 分钟局：我方持有边界秒 tick 的 **555 个，
+555/555 全部与场方发布价一致**；另有 27 个边界秒不在我方 feed 中，按不可独立证明
+处理、不作判定。比较按场方自己打印的精度进行——我方文件存的是 float64 的完整展开
+（`64944.024999999994`），场方打印为 `64944.025`，二者是同一个数、不是分歧。
+
+场方的结算规则本身则可直接在同一文件上算：**`end_price >= start_price` 时 Up 赢**，
+当天 145 Up / 146 Down。
 
 ## Data quality on the sample day / 样例当天的数据质量
 
-- Settlement feed: all three feeds carried a report for **82,523 of the day's
-  86,400 seconds (95.5%)**, with **no gap longer than 6 seconds** across the
-  whole 24 hours — zero outages over 60s.
-- Markets: every 5m and 15m slot of all three assets present and settled
-  (288 + 96 per asset).
+- Settlement feed: **82,568 of the day's 86,400 seconds (95.6%)** carried a
+  report, with **no gap longer than 5 seconds** across the whole 24 hours.
+- Order book: 679,335 snapshots for BTC-5M alone, unthrottled.
+- Capture latency for the order book, measured on this day:
+  **p50 63 ms, p95 199 ms** (`recv_ms − update_ts_ms`).
 - Collection point sits next to the venue's own infrastructure in Tokyo.
 
 You can check the feed-continuity claim yourself: `publish_time` in the price
 file is a unix second, so the gap distribution is computable straight from the
 sample.
 
-结算价流当天三条 feed 均覆盖 86,400 秒中的 **82,523 秒（95.5%）**，**最大间隔 6
-秒**，全天无超过 60 秒的断档；三个资产的 5m / 15m 槽位全部齐全且已结算（每资产
-288 + 96 个）；采集点部署在东京，紧邻场方基础设施。价格文件的 `publish_time` 是
-unix 秒，间隔分布可直接从样例自行核算。
+结算价流当天覆盖 86,400 秒中的 **82,568 秒（95.6%）**，**最大间隔 5 秒**；仅
+BTC-5M 一个系列就有 679,335 条盘口快照（未限流）；盘口采集延迟当日实测
+**p50 63 毫秒、p95 199 毫秒**（`recv_ms − update_ts_ms`）；采集点部署在东京，紧邻
+场方基础设施。价格文件的 `publish_time` 是 unix 秒，间隔分布可直接从样例自行核算。
 
 ## Known limits — stated up front / 已知限制（先说清楚）
 
@@ -94,10 +144,21 @@ unix 秒，间隔分布可直接从样例自行核算。
   there is no trade tape. (Our Polymarket dataset does have both.)
 - The per-tick `provider` field is **mixed** — see `DATA_GUIDE.md`. Market-level
   settlement source is `CHAINLINK` for 5m/15m and `BINANCE` for daily.
+- The price feed's upstream timestamps (`publish_time`, `server_ts`) are **whole
+  seconds**, so a millisecond-level capture latency cannot be derived for it —
+  the quantisation is larger than the latency being measured. `recv_ms` is our
+  own millisecond receive time, and the order book does carry a millisecond
+  upstream timestamp, which is why the latency figure above is quoted for the
+  book only. We would rather omit a number than publish one its inputs cannot
+  support.
 
 价格仅 float64（上游无全精度串）；盘口**只有快照**，上游不发增量，也没有成交
 流水（我们的 Polymarket 数据集两者都有）；逐条 tick 的 `provider` 字段是**混合**
 的，详见说明书——市场层面的结算源 5m/15m 为 `CHAINLINK`、daily 为 `BINANCE`。
+价格流的上游时间戳（`publish_time`、`server_ts`）**只到整秒**，因此无法据此给出
+毫秒级采集延迟——量化误差比要测的延迟本身还大；`recv_ms` 是我方毫秒级接收时间，
+而盘口带有毫秒级上游时间戳，所以上面的延迟数字只给盘口。**宁可不给一个数字，
+也不给一个它的输入撑不起来的数字。**
 历史起点 2026-06-12，但**该日为部分覆盖日**（当天中途开采，约占全天 66%），
 **首个完整 UTC 日为 2026-06-13**；早期若干天 ETH/BNB 槽位较少（当时只有 daily 市场）。
 

@@ -2,6 +2,28 @@
 
 (中文版见 数据使用说明.md)
 
+## Layout
+
+The sample bundle unpacks to a directory laid out exactly like the paid
+archive, so anything written against a sample keeps working against a delivered
+dataset unchanged:
+
+```
+predict-fun-data-samples/
+  data/predict-fun/prices/BTCUSDT/BTCUSDT-feed<id>-predict-prices-<date>.csv.gz
+  data/predict-fun/orderbook/BTC-5M/BTC-5M-predict-orderbook-<date>.jsonl.gz
+  data/predict-fun/markets/predict-markets-<date>.jsonl.gz
+  data/predict-fun/klines/BTCUSDT/1m/BTCUSDT-feed<id>-1m-<date>.csv.gz
+```
+
+The directory segments carry meaning, and tooling reads them:
+`data/predict-fun/<dataset>/<series>/`, where the series key is the symbol for
+prices and klines (`BTCUSDT`) and `<ASSET>-<INTERVAL>` for the order book
+(`BTC-5M`, `ETH-15M`, `BNB-DAILY`). The markets table is one file per day
+covering every asset and interval, so it has no series directory. A full
+purchased dataset has the same shape with more assets, more intervals, all 13
+kline periods and more days under it.
+
 Predict.fun is the prediction-market venue reachable from the Binance Wallet
 front end (a BNB-chain venue). This dataset is collected independently from our
 Polymarket dataset and is **never mixed with it** — different venue, different
@@ -49,9 +71,19 @@ own `version`, `marketId`, `orderCount`, `lastOrderSettled` and
 
 Note: these are **full snapshots only**. Predict.fun's stream does not publish
 order-book deltas, so unlike our Polymarket dataset there is no `price_change`
-series and no trade tape. Snapshots are kept-first throttled to 1 per second
-per market (disclosed); book state at time t = the market's latest snapshot
+series and no trade tape. Book state at time t = the market's latest snapshot
 with `recv_ms <= t`.
+
+Throttling (disclosed), which changed and matters if you span the date:
+
+- through 2026-08-24: kept at most 1 snapshot per market per second
+- **from 2026-08-25: no throttling at all — every snapshot the upstream pushed
+  is archived**
+
+The earlier throttle dropped a large majority of upstream snapshots, so a day
+from 2026-08-25 onward carries roughly ten times the book detail of an earlier
+one. Compare for yourself: the sample day holds 679,335 snapshots for BTC-5M
+where 2026-07-24 held 68,398.
 
 ## predict-markets-<date>.jsonl.gz — market metadata and settlement outcome
 
