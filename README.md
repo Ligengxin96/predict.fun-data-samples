@@ -164,6 +164,18 @@ BTC-5M 一个系列就有 679,335 条盘口快照（未限流）；盘口采集�
 
 ## Buy / 购买
 
-Telegram: **@hankson_level** — delivery is an expiring private download link
-(tar bundle with checksums and the data guide), scoped to exactly the assets,
-data types and date range you purchase.
+**[outcometick.com](https://outcometick.com)** — subscribe or buy a date range,
+then pull the data with your API key. Predict.fun is sold as its own venue tier,
+or bundled with Polymarket. It is the same archive these samples come from,
+scoped to exactly the assets, data types and dates you purchase.
+
+Questions, or something not working:
+**[Telegram group](https://t.me/+TcK_hJOzOz5mZTk1)** ·
+**support@outcometick.com**
+
+**[outcometick.com](https://outcometick.com)** —— 按订阅或按日期区间购买，用 API
+key 自助取数。Predict.fun 可单独作为一个场子购买，也可与 Polymarket 打包。样例即
+取自同一份归档，购买后按你选择的币种、数据类型与日期范围开放。
+
+有疑问或遇到问题：**[Telegram 群](https://t.me/+TcK_hJOzOz5mZTk1)** ·
+**support@outcometick.com**
