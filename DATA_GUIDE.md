@@ -35,40 +35,35 @@ settlement source, separate files.
 |---|---|
 | price_feed_id | upstream feed id (1 = BTCUSDT, 2 = ETHUSDT, 3 = BNBUSDT) |
 | symbol | feed symbol, e.g. BTCUSDT |
-| provider | source the upstream attributes this tick to: `CHAINLINK` or `BINANCE` — see the note below |
+| provider | the channel we subscribe this feed on — see the note below (ignore this column in files exported before 2026-09-05) |
 | publish_time | price event time (unix **seconds**) |
 | server_ts | upstream message timestamp (unix **seconds**) |
 | price | price as float64 |
 | recv_ms | collector receive time (unix **milliseconds**) |
 
-Note on `provider`: the upstream attributes each tick to a source and it is
-**not constant** — measured on 2026-09-04, `BINANCE` carries 90% of BTCUSDT and
-ETHUSDT ticks and 81% of BNBUSDT, the rest `CHAINLINK`. The two alternate second
-by second, and a given second never carries both.
+Note on `provider`: this column records **the channel we subscribe the feed on**
+(`CHAINLINK`, or `PYTH` for feeds that publish on the pyth topic). It is a
+property of the feed, not of the price, and it is not an upstream per-tick source
+attribution.
 
-**It does not line up with the market-level `price_feed_provider`, and that is
-worth stating plainly:** 5m and 15m markets declare `CHAINLINK` as their
-settlement source, yet roughly **80% of the ticks landing exactly on their
-settlement boundary seconds are attributed to `BINANCE`**. We archive the label
-verbatim rather than normalising it — we do not know what the upstream means by
-it, and normalising would be guessing on your behalf.
+**In files exported before 2026-09-05 this column is unreliable and should be
+ignored.** It carried the settlement source declared by whichever market our
+discovery loop had processed most recently — and a single price feed is shared by
+markets of several lengths whose declarations differ (5m/15m declare `CHAINLINK`,
+hourly and 24h declare `BINANCE`), so the label flipped back and forth on our
+10-second poll. It says nothing about where a given price came from. The bug is
+fixed from 2026-09-05.
 
-What we can tell you is that **the stream is numerically self-consistent
-regardless of the label**: on the 2026-08-25 sample day, all 555 boundary-second
-ticks we hold reproduce the venue's own published `start_price`/`end_price`
-exactly. And **mixing the attributions does not measurably distort volatility** —
-across 2026-09-02..09-05 (~280,000 cross-source second-to-second steps),
-cross-source and same-source steps share the same mean and p95 to within a few
-percent, and the signed move across a source switch is statistically
-indistinguishable from zero in both directions (BTC `-0.0003±0.0044` bps and
-`+0.0006±0.0046` bps). A real price basis between two sources would show equal
-and *opposite* offsets on the two switch directions; it does not.
+**The price data itself was never affected.** The stream is single-source — there
+is no "mixed source" to correct for, no impact on volatility or any other
+statistic, and no reason to filter or group by this column. If you have split
+your data on it, merge it back. Independently verified: on the 2026-08-25 sample
+day, all 555 settlement-boundary-second ticks we hold reproduce the venue's own
+published `start_price`/`end_price` exactly.
 
 Limitation: our tick primary key is `(price_feed_id, publish_time, price)` and
-does **not** include `provider`. If the upstream pushes the same feed/second/price
-twice under different attributions, we keep the first and absorb the duplicate —
-so read `provider` as "the attribution we saw first", not as a complete record of
-every label the upstream emitted.
+does not include `provider`, so a duplicate frame is absorbed and only the first
+label survives.
 
 Note on precision: unlike our Polymarket settlement feed, Predict.fun publishes
 this price as a float64 only — there is no full-precision integer string

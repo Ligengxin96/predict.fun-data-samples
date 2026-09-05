@@ -159,14 +159,13 @@ BTC-5M 一个系列就有 679,335 条盘口快照（未限流）；盘口采集�
   string for this venue, so none is archived.
 - Order book is **snapshots only** — the upstream stream carries no deltas, and
   there is no trade tape. (Our Polymarket dataset does have both.)
-- The per-tick `provider` field is **mixed and does not match the market-level
-  `price_feed_provider`**: 5m/15m markets declare `CHAINLINK` as their settlement
-  source, yet ~80% of the ticks on their settlement boundary seconds are
-  attributed to `BINANCE` (hourly and 24h markets settle on Binance candles).
-  We archive the label verbatim. The stream is numerically self-consistent
-  regardless — all 555 boundary-second ticks on the sample day reproduce the
-  venue's published prices — and mixing the attributions does not measurably
-  distort volatility. `DATA_GUIDE.md` has the measurements.
+- The `provider` column records the channel we subscribe a feed on, not an
+  upstream per-tick source. **In files exported before 2026-09-05 it is
+  unreliable — ignore it** (it tracked whichever market our discovery loop saw
+  last, and one feed is shared by markets declaring different settlement
+  sources, so it flipped on our 10s poll; fixed 2026-09-05). The price data
+  itself was never affected: the stream is single-source, so there is nothing
+  to filter or group by here. See `DATA_GUIDE.md`.
 - The price feed's upstream timestamps (`publish_time`, `server_ts`) are **whole
   seconds**, so a millisecond-level capture latency cannot be derived for it —
   the quantisation is larger than the latency being measured. `recv_ms` is our
@@ -176,11 +175,11 @@ BTC-5M 一个系列就有 679,335 条盘口快照（未限流）；盘口采集�
   support.
 
 价格仅 float64（上游无全精度串）；盘口**只有快照**，上游不发增量，也没有成交
-流水（我们的 Polymarket 数据集两者都有）；逐条 tick 的 `provider` 字段是**混合的，
-且与市场层面的 `price_feed_provider` 对不上**——5m/15m 市场声明结算源是 `CHAINLINK`，
-但其结算边界秒上约 80% 的 tick 标着 `BINANCE`（小时与 24 小时市场则由币安 K 线结算）。
-我们原样归档该标注。**无论标注是谁，这条流数值上是自洽的**——样例日 555 个边界秒 tick
-全部复现场方发布价——且混合标注不会可测地扭曲波动率，实测数字见说明书。
+流水（我们的 Polymarket 数据集两者都有）；`provider` 列记录的是我们订阅该 feed 所用的
+通道，不是上游逐条给出的来源标注，**2026-09-05 之前导出的文件里这一列不可靠、请忽略**
+（当时它跟随我们的发现循环最后处理到的那个市场，而同一条 feed 被声明了不同结算源的
+市场共用，于是随 10 秒轮询来回跳；已修复）。**价格数据本身从未受影响**：这条流是单一
+来源，无需按此列过滤或分组，详见说明书。
 价格流的上游时间戳（`publish_time`、`server_ts`）**只到整秒**，因此无法据此给出
 毫秒级采集延迟——量化误差比要测的延迟本身还大；`recv_ms` 是我方毫秒级接收时间，
 而盘口带有毫秒级上游时间戳，所以上面的延迟数字只给盘口。**宁可不给一个数字，
