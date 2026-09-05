@@ -101,7 +101,7 @@ One file per day covering every asset and interval.
 | start_sec / end_sec | slot boundaries (unix sec) |
 | start_price | the strike — Up must close strictly above it |
 | end_price | the settlement price |
-| status | e.g. RESOLVED |
+| status | the market state as of our **last read** of it upstream — not a settlement flag, see below |
 
 Settlement rule, three outcomes: `end_price > start_price` → Up wins;
 `end_price < start_price` → Down wins; `end_price == start_price` → the slot is
@@ -111,6 +111,13 @@ five-minute slots closes flat, so a binary `>=` predicate will misscore them.
 Both values come from the upstream market object, so a market's outcome is
 verifiable from this file alone; the price files let you audit the path in
 between.
+
+Do **not** use `status` to decide whether a slot has settled. We stop re-reading
+a market once it has an `end_price`, and at that moment the venue very often
+still reports it as `OPEN` — so `status` freezes at whatever it was then. Most 5m/15m slots do read `RESOLVED`, but **fewer than 1% of
+settled daily slots ever do** — filtering on `status == 'RESOLVED'` silently
+drops nearly every daily slot. The reliable test is whether `end_price` is
+present; in our whole history no row carries `RESOLVED` without one.
 
 ## <SYMBOL>-feed<id>-<period>-<date>.csv.gz — klines
 
