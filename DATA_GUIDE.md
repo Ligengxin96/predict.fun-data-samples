@@ -99,13 +99,18 @@ One file per day covering every asset and interval.
 | price_feed_provider | settlement source for this market: `CHAINLINK` for 5m and 15m, `BINANCE` for daily |
 | condition_id | on-chain condition id |
 | start_sec / end_sec | slot boundaries (unix sec) |
-| start_price | the strike (price to beat) |
+| start_price | the strike — Up must close strictly above it |
 | end_price | the settlement price |
 | status | e.g. RESOLVED |
 
-Settlement rule: Up wins when `end_price >= start_price`. Both values come from
-the upstream market object, so a market's outcome is verifiable from this file
-alone; the price files let you audit the path in between.
+Settlement rule, three outcomes: `end_price > start_price` → Up wins;
+`end_price < start_price` → Down wins; `end_price == start_price` → the slot is
+a **push**, where the venue resolves both sides as won and stakes are returned.
+A tie is not an Up win here — the opposite of Polymarket — and about 1 in 100
+five-minute slots closes flat, so a binary `>=` predicate will misscore them.
+Both values come from the upstream market object, so a market's outcome is
+verifiable from this file alone; the price files let you audit the path in
+between.
 
 ## <SYMBOL>-feed<id>-<period>-<date>.csv.gz — klines
 

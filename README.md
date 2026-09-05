@@ -23,7 +23,7 @@ by range.
 |---|---|
 | `prices` | The settlement price feed, tick-by-tick (~1Hz per symbol), with the upstream's own per-tick `provider` attribution and three timestamps |
 | `orderbook` | Full order-book snapshots. Throttled to 1/sec per market through 2026-08-24; **unthrottled from 2026-08-25**, so every snapshot the venue pushed is archived — roughly ten times the detail |
-| `markets` | Per-market metadata with **strike** (`start_price`) and **settlement price** (`end_price`) — every slot's outcome is verifiable from this file alone |
+| `markets` | Per-market metadata with **strike** (`start_price`) and **settlement price** (`end_price`) — every slot's outcome (Up / Down / push) is verifiable from this file alone |
 | `klines` | 13 intraday periods (1s..1d) plus 3d / 1w / 1mo full-history snapshots, derived from the price ticks |
 
 - Assets: BTC, ETH, BNB × intervals 5m / 15m / daily
@@ -103,8 +103,16 @@ Prices are compared at the precision the venue itself printed. Our files carry
 the full float64 expansion (`64944.024999999994`), the venue prints the same
 number as `64944.025`; those are one value, not a disagreement.
 
-The venue's own settlement rule is then plain arithmetic on the same file:
-**Up wins when `end_price >= start_price`** — 145 Up and 146 Down that day.
+Settlement is then plain arithmetic on the same file, with one wrinkle worth
+knowing before you score anything: a slot that closes exactly where it opened is
+**a push, not an Up win** — the venue resolves both sides as won and returns the
+stakes. So `end_price > start_price` → Up, `end_price < start_price` → Down,
+`end_price == start_price` → push. That day: **144 Up, 146 Down and 1 push**
+(`btc-updown-5m-1787649300`, which opened and closed at `79844.005`).
+
+Ties are not a rounding curiosity: across our history roughly **1 in 100
+five-minute slots** closes flat. Note this is the opposite of Polymarket, whose
+rules settle a tie to Up — a binary `>=` predicate is wrong on this venue.
 
 场方为每个市场发布自己的 `start_price`（strike）与 `end_price`（结算价）。对我们的
 数据而言真正要紧的是：**我们卖的这条价格流，是不是它结算时用的那条**。所以这里核对的
@@ -115,8 +123,15 @@ The venue's own settlement rule is then plain arithmetic on the same file:
 处理、不作判定。比较按场方自己打印的精度进行——我方文件存的是 float64 的完整展开
 （`64944.024999999994`），场方打印为 `64944.025`，二者是同一个数、不是分歧。
 
-场方的结算规则本身则可直接在同一文件上算：**`end_price >= start_price` 时 Up 赢**，
-当天 145 Up / 146 Down。
+结算本身可直接在同一文件上算，但计分前有一处需要留意：收在起点价上的局是**平局
+退款（push），不算 Up 赢**——场方会把两边都判为赢、本金退回。即
+`end_price > start_price` → Up，`end_price < start_price` → Down，
+`end_price == start_price` → push。当天为 **144 Up / 146 Down / 1 push**
+（`btc-updown-5m-1787649300`，开收都是 `79844.005`）。
+
+平局并非可以忽略的边角：在我们的历史数据里，5 分钟局约**每 100 局就有 1 局**收在平局。
+另请注意这与 Polymarket 相反——后者的规则把平局判给 Up，所以在本 venue 上用
+`>=` 这种二元判据是错的。
 
 ## Data quality on the sample day / 样例当天的数据质量
 
