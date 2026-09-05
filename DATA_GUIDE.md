@@ -35,7 +35,7 @@ settlement source, separate files.
 |---|---|
 | price_feed_id | upstream feed id (1 = BTCUSDT, 2 = ETHUSDT, 3 = BNBUSDT) |
 | symbol | feed symbol, e.g. BTCUSDT |
-| provider | the channel we subscribe this feed on — see the note below (ignore this column in files exported before 2026-09-05) |
+| provider | the channel we subscribe this feed on — see the note below (ignore this column for data dated 2026-09-03 and earlier) |
 | publish_time | price event time (unix **seconds**) |
 | server_ts | upstream message timestamp (unix **seconds**) |
 | price | price as float64 |
@@ -46,13 +46,13 @@ Note on `provider`: this column records **the channel we subscribe the feed on**
 property of the feed, not of the price, and it is not an upstream per-tick source
 attribution.
 
-**In files exported before 2026-09-05 this column is unreliable and should be
+**For data dated 2026-09-03 and earlier this column is unreliable and should be
 ignored.** It carried the settlement source declared by whichever market our
 discovery loop had processed most recently — and a single price feed is shared by
 markets of several lengths whose declarations differ (5m/15m declare `CHAINLINK`,
 hourly and 24h declare `BINANCE`), so the label flipped back and forth on our
-10-second poll. It says nothing about where a given price came from. The bug is
-fixed from 2026-09-05.
+10-second poll. It says nothing about where a given price came from. Fixed at the source on 2026-09-05; data dated 2026-09-04 onward carries the
+corrected label.
 
 **The price data itself was never affected.** The stream is single-source — there
 is no "mixed source" to correct for, no impact on volatility or any other

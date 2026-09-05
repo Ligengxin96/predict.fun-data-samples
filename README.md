@@ -160,10 +160,10 @@ BTC-5M 一个系列就有 679,335 条盘口快照（未限流）；盘口采集�
 - Order book is **snapshots only** — the upstream stream carries no deltas, and
   there is no trade tape. (Our Polymarket dataset does have both.)
 - The `provider` column records the channel we subscribe a feed on, not an
-  upstream per-tick source. **In files exported before 2026-09-05 it is
+  upstream per-tick source. **For data dated 2026-09-03 and earlier it is
   unreliable — ignore it** (it tracked whichever market our discovery loop saw
   last, and one feed is shared by markets declaring different settlement
-  sources, so it flipped on our 10s poll; fixed 2026-09-05). The price data
+  sources, so it flipped on our 10s poll; fixed 2026-09-05, and data from 2026-09-04 onward is correct). The price data
   itself was never affected: the stream is single-source, so there is nothing
   to filter or group by here. See `DATA_GUIDE.md`.
 - The price feed's upstream timestamps (`publish_time`, `server_ts`) are **whole
@@ -176,9 +176,9 @@ BTC-5M 一个系列就有 679,335 条盘口快照（未限流）；盘口采集�
 
 价格仅 float64（上游无全精度串）；盘口**只有快照**，上游不发增量，也没有成交
 流水（我们的 Polymarket 数据集两者都有）；`provider` 列记录的是我们订阅该 feed 所用的
-通道，不是上游逐条给出的来源标注，**2026-09-05 之前导出的文件里这一列不可靠、请忽略**
+通道，不是上游逐条给出的来源标注，**2026-09-03 及更早的数据里这一列不可靠、请忽略**
 （当时它跟随我们的发现循环最后处理到的那个市场，而同一条 feed 被声明了不同结算源的
-市场共用，于是随 10 秒轮询来回跳；已修复）。**价格数据本身从未受影响**：这条流是单一
+市场共用，于是随 10 秒轮询来回跳；已于 2026-09-05 修复，2026-09-04 起的数据是正确的）。**价格数据本身从未受影响**：这条流是单一
 来源，无需按此列过滤或分组，详见说明书。
 价格流的上游时间戳（`publish_time`、`server_ts`）**只到整秒**，因此无法据此给出
 毫秒级采集延迟——量化误差比要测的延迟本身还大；`recv_ms` 是我方毫秒级接收时间，
