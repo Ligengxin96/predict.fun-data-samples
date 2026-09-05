@@ -26,7 +26,9 @@ by range.
 | `markets` | Per-market metadata with **strike** (`start_price`) and **settlement price** (`end_price`) — every slot's outcome (Up / Down / push) is verifiable from this file alone |
 | `klines` | 13 intraday periods (1s..1d) plus 3d / 1w / 1mo full-history snapshots, derived from the price ticks |
 
-- Assets: BTC, ETH, BNB × intervals 5m / 15m / daily
+- Assets: BTC, ETH, BNB × intervals 5m / 15m / hourly / daily. The 5m and 15m
+  markets settle on **Chainlink**; the hourly and 24h ones settle on **Binance**
+  candles — `price_feed_provider` says which, per market
 - History from 2026-06-12, growing daily. Note that **2026-06-12 is a partial
   day** (collection started mid-day; ~66% of the day's seconds) — the **first
   complete UTC day is 2026-06-13**. Early days also carry fewer ETH/BNB slots,
@@ -157,8 +159,14 @@ BTC-5M 一个系列就有 679,335 条盘口快照（未限流）；盘口采集�
   string for this venue, so none is archived.
 - Order book is **snapshots only** — the upstream stream carries no deltas, and
   there is no trade tape. (Our Polymarket dataset does have both.)
-- The per-tick `provider` field is **mixed** — see `DATA_GUIDE.md`. Market-level
-  settlement source is `CHAINLINK` for 5m/15m and `BINANCE` for daily.
+- The per-tick `provider` field is **mixed and does not match the market-level
+  `price_feed_provider`**: 5m/15m markets declare `CHAINLINK` as their settlement
+  source, yet ~80% of the ticks on their settlement boundary seconds are
+  attributed to `BINANCE` (hourly and 24h markets settle on Binance candles).
+  We archive the label verbatim. The stream is numerically self-consistent
+  regardless — all 555 boundary-second ticks on the sample day reproduce the
+  venue's published prices — and mixing the attributions does not measurably
+  distort volatility. `DATA_GUIDE.md` has the measurements.
 - The price feed's upstream timestamps (`publish_time`, `server_ts`) are **whole
   seconds**, so a millisecond-level capture latency cannot be derived for it —
   the quantisation is larger than the latency being measured. `recv_ms` is our
@@ -168,8 +176,11 @@ BTC-5M 一个系列就有 679,335 条盘口快照（未限流）；盘口采集�
   support.
 
 价格仅 float64（上游无全精度串）；盘口**只有快照**，上游不发增量，也没有成交
-流水（我们的 Polymarket 数据集两者都有）；逐条 tick 的 `provider` 字段是**混合**
-的，详见说明书——市场层面的结算源 5m/15m 为 `CHAINLINK`、daily 为 `BINANCE`。
+流水（我们的 Polymarket 数据集两者都有）；逐条 tick 的 `provider` 字段是**混合的，
+且与市场层面的 `price_feed_provider` 对不上**——5m/15m 市场声明结算源是 `CHAINLINK`，
+但其结算边界秒上约 80% 的 tick 标着 `BINANCE`（小时与 24 小时市场则由币安 K 线结算）。
+我们原样归档该标注。**无论标注是谁，这条流数值上是自洽的**——样例日 555 个边界秒 tick
+全部复现场方发布价——且混合标注不会可测地扭曲波动率，实测数字见说明书。
 价格流的上游时间戳（`publish_time`、`server_ts`）**只到整秒**，因此无法据此给出
 毫秒级采集延迟——量化误差比要测的延迟本身还大；`recv_ms` 是我方毫秒级接收时间，
 而盘口带有毫秒级上游时间戳，所以上面的延迟数字只给盘口。**宁可不给一个数字，

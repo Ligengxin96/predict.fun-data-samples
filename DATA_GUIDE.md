@@ -41,11 +41,34 @@ settlement source, separate files.
 | price | price as float64 |
 | recv_ms | collector receive time (unix **milliseconds**) |
 
-Note on `provider`: the upstream feed carries a per-tick source attribution and
-it is **not constant** — on 2026-07-24 roughly 90% of ticks on each feed were
-attributed to `BINANCE` and 10% to `CHAINLINK`. We archive the field verbatim
-rather than normalising it, so you can filter or weight by source yourself. Do
-not assume a single provider for the whole file.
+Note on `provider`: the upstream attributes each tick to a source and it is
+**not constant** — measured on 2026-09-04, `BINANCE` carries 90% of BTCUSDT and
+ETHUSDT ticks and 81% of BNBUSDT, the rest `CHAINLINK`. The two alternate second
+by second, and a given second never carries both.
+
+**It does not line up with the market-level `price_feed_provider`, and that is
+worth stating plainly:** 5m and 15m markets declare `CHAINLINK` as their
+settlement source, yet roughly **80% of the ticks landing exactly on their
+settlement boundary seconds are attributed to `BINANCE`**. We archive the label
+verbatim rather than normalising it — we do not know what the upstream means by
+it, and normalising would be guessing on your behalf.
+
+What we can tell you is that **the stream is numerically self-consistent
+regardless of the label**: on the 2026-08-25 sample day, all 555 boundary-second
+ticks we hold reproduce the venue's own published `start_price`/`end_price`
+exactly. And **mixing the attributions does not measurably distort volatility** —
+across 2026-09-02..09-05 (~280,000 cross-source second-to-second steps),
+cross-source and same-source steps share the same mean and p95 to within a few
+percent, and the signed move across a source switch is statistically
+indistinguishable from zero in both directions (BTC `-0.0003±0.0044` bps and
+`+0.0006±0.0046` bps). A real price basis between two sources would show equal
+and *opposite* offsets on the two switch directions; it does not.
+
+Limitation: our tick primary key is `(price_feed_id, publish_time, price)` and
+does **not** include `provider`. If the upstream pushes the same feed/second/price
+twice under different attributions, we keep the first and absorb the duplicate —
+so read `provider` as "the attribution we saw first", not as a complete record of
+every label the upstream emitted.
 
 Note on precision: unlike our Polymarket settlement feed, Predict.fun publishes
 this price as a float64 only — there is no full-precision integer string
@@ -93,7 +116,7 @@ One file per day covering every asset and interval.
 |---|---|
 | category_slug | market id; suffix = slot start (unix sec) |
 | asset | btc / eth / bnb |
-| interval_label | 5m / 15m / daily |
+| interval_label | `5m` / `15m` / `hourly` / `daily` — see the note below |
 | market_id | upstream market id (joins to the order-book files) |
 | price_feed_id / price_feed_symbol | which feed settles this market |
 | price_feed_provider | settlement source for this market: `CHAINLINK` for 5m and 15m, `BINANCE` for daily |
@@ -102,6 +125,14 @@ One file per day covering every asset and interval.
 | start_price | the strike — Up must close strictly above it |
 | end_price | the settlement price |
 | status | the market state as of our **last read** of it upstream — not a settlement flag, see below |
+
+Interval labels: files exported **before 2026-09-05** label the 1-hour markets
+as `daily`. That was our own slug-parsing bug — a single `up-or-down` pattern
+matched both families — and it is corrected from that date on. The 24h market is
+the one whose slug contains `-on-` (`bitcoin-up-or-down-on-september-5-2026`);
+the 1-hour one ends in the hour (`bitcoin-up-or-down-september-5-2026-5am-et`).
+If you need the true interval on older files, `end_sec - start_sec` is always
+authoritative.
 
 Settlement rule, three outcomes: `end_price > start_price` → Up wins;
 `end_price < start_price` → Down wins; `end_price == start_price` → the slot is
@@ -114,9 +145,10 @@ between.
 
 Do **not** use `status` to decide whether a slot has settled. We stop re-reading
 a market once it has an `end_price`, and at that moment the venue very often
-still reports it as `OPEN` — so `status` freezes at whatever it was then. Most 5m/15m slots do read `RESOLVED`, but **fewer than 1% of
-settled daily slots ever do** — filtering on `status == 'RESOLVED'` silently
-drops nearly every daily slot. The reliable test is whether `end_price` is
+still reports it as `OPEN` — so `status` freezes at whatever it was then. Most 5m/15m slots do read `RESOLVED` (about 92%),
+but the Binance-settled families almost never do — **0 of 255 settled 24h
+markets and 0.65% of settled hourly ones** — so filtering on
+`status == 'RESOLVED'` silently drops nearly all of them. The reliable test is whether `end_price` is
 present; in our whole history no row carries `RESOLVED` without one.
 
 ## <SYMBOL>-feed<id>-<period>-<date>.csv.gz — klines
