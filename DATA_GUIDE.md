@@ -54,8 +54,10 @@ hourly and 24h declare `BINANCE`), so the label flipped back and forth on our
 10-second poll. It says nothing about where a given price came from. Fixed at the source on 2026-09-05; data dated 2026-09-04 onward carries the
 corrected label.
 
-**The price data itself was never affected.** The stream is single-source — there
-is no "mixed source" to correct for, no impact on volatility or any other
+**The price data itself was never affected.** Every tick we archive arrives on a
+single upstream topic (`chainlinkAssetPriceUpdate/<feed_id>`), and the feed
+carries no per-tick source information of any kind — so there is no mixed-source
+structure in this data to correct for, no impact on volatility or any other
 statistic, and no reason to filter or group by this column. If you have split
 your data on it, merge it back. Independently verified: on the 2026-08-25 sample
 day, all 555 settlement-boundary-second ticks we hold reproduce the venue's own
