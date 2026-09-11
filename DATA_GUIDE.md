@@ -59,8 +59,8 @@ single upstream topic (`chainlinkAssetPriceUpdate/<feed_id>`), and the feed
 carries no per-tick source information of any kind — so there is no mixed-source
 structure in this data to correct for, no impact on volatility or any other
 statistic, and no reason to filter or group by this column. If you have split
-your data on it, merge it back. Independently verified: on the 2026-08-25 sample
-day, all 555 settlement-boundary-second ticks we hold reproduce the venue's own
+your data on it, merge it back. Independently verified: on the 2026-09-08 sample
+day, all 543 settlement-boundary-second ticks we hold reproduce the venue's own
 published `start_price`/`end_price` exactly.
 
 Limitation: our tick primary key is `(price_feed_id, publish_time, price)` and

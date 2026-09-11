@@ -1,42 +1,42 @@
 {
-  "date": "2026-08-25",
+  "date": "2026-09-08",
   "venue": "predict",
-  "note": "free sample: one real unmodified UTC day (2026-08-25), laid out exactly as the paid archive is",
+  "note": "free sample: one real unmodified UTC day (2026-09-08), laid out exactly as the paid archive is",
   "bundle": {
     "name": "predict-fun-data-samples.tar.gz",
     "topLevelDir": "predict-fun-data-samples",
-    "bytes": 47573726,
-    "sha256": "c956ac5cdd5040cd1544115a3470fe51a934b8c51788d1625214cd97690d4010",
+    "bytes": 40422909,
+    "sha256": "a4b0a4d6a754b42364714ffa633dab2e9d55db1cae8bc5932eafafa4e83236c4",
     "url": "https://github.com/Ligengxin96/predict.fun-data-samples/releases/latest/download/predict-fun-data-samples.tar.gz"
   },
   "files": [
     {
-      "path": "data/predict-fun/prices/BTCUSDT/BTCUSDT-feed1-predict-prices-2026-08-25.csv.gz",
-      "name": "BTCUSDT-feed1-predict-prices-2026-08-25.csv.gz",
-      "rows": 82568,
-      "bytes": 898525,
-      "sha256": "61bedc63fb9893bf23ffe705d34944749cd1edccf586f15807235d8aa586f56e"
+      "path": "data/predict-fun/prices/BTCUSDT/BTCUSDT-feed1-predict-prices-2026-09-08.csv.gz",
+      "name": "BTCUSDT-feed1-predict-prices-2026-09-08.csv.gz",
+      "rows": 82342,
+      "bytes": 849993,
+      "sha256": "fd23edde9d62d2495ea8a26a97e87764adecbbfd5cc435c79ddcac8236769ab6"
     },
     {
-      "path": "data/predict-fun/orderbook/BTC-5M/BTC-5M-predict-orderbook-2026-08-25.jsonl.gz",
-      "name": "BTC-5M-predict-orderbook-2026-08-25.jsonl.gz",
-      "rows": 679335,
-      "bytes": 46730012,
-      "sha256": "af4db9e11a6dabc67a839cb04bfca3de1de47d2f88d37822ad4448b2e38a5331"
+      "path": "data/predict-fun/orderbook/BTC-5M/BTC-5M-predict-orderbook-2026-09-08.jsonl.gz",
+      "name": "BTC-5M-predict-orderbook-2026-09-08.jsonl.gz",
+      "rows": 478603,
+      "bytes": 39643207,
+      "sha256": "02e52cf08d4cd3ce7deae9653e72ab2d864d98bdae37cf39b2015e2610ad3824"
     },
     {
-      "path": "data/predict-fun/markets/predict-markets-2026-08-25.jsonl.gz",
-      "name": "predict-markets-2026-08-25.jsonl.gz",
+      "path": "data/predict-fun/markets/predict-markets-2026-09-08.jsonl.gz",
+      "name": "predict-markets-2026-09-08.jsonl.gz",
       "rows": 1245,
-      "bytes": 71139,
-      "sha256": "af7166f89f886bff722d35c26e7645caad3f251cbadcab0fed044205c0925f31"
+      "bytes": 71275,
+      "sha256": "09d92d2acf39fc4da5414d3ac72f9eeafd0a13c45417ec4fbbeccf7821c4d1c9"
     },
     {
-      "path": "data/predict-fun/klines/BTCUSDT/1m/BTCUSDT-feed1-1m-2026-08-25.csv.gz",
-      "name": "BTCUSDT-feed1-1m-2026-08-25.csv.gz",
+      "path": "data/predict-fun/klines/BTCUSDT/1m/BTCUSDT-feed1-1m-2026-09-08.csv.gz",
+      "name": "BTCUSDT-feed1-1m-2026-09-08.csv.gz",
       "rows": 1440,
-      "bytes": 22931,
-      "sha256": "6c06804c42676a6dc0ba2d4cf419c0fead1b2e3e93a32d284e488819e5538e9f"
+      "bytes": 20905,
+      "sha256": "14dd94697316707efc4aff1a42632bd0a2d54b268bb290b7f5c727799e0c7280"
     }
   ]
 }
