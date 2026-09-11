@@ -33,15 +33,26 @@ by range.
   day** (collection started mid-day; ~66% of the day's seconds) — the **first
   complete UTC day is 2026-06-13**. Early days also carry fewer ETH/BNB slots,
   which only had daily markets at the time.
-- Every file ships with row counts + SHA-256 in the manifest, so you can verify
-  what you received; the price files carry per-tick timestamps, so feed
-  continuity is auditable directly from the data
+- Every file comes with its size and SHA-256, so you can verify what you
+  received; the price files carry per-tick timestamps, so feed continuity is
+  auditable directly from the data
 
 ## Samples / 样例
 
 **[Download the sample bundle](https://github.com/Ligengxin96/predict.fun-data-samples/releases/latest/download/predict-fun-data-samples.tar.gz)**
 — one real, unmodified UTC day (**2026-09-08**) of the BTC 5-minute series plus
 the settlement price feed, the full market/settlement table and one kline period.
+
+The same sample day, together with the Polymarket one, is also on
+[Kaggle](https://www.kaggle.com/datasets/ligengxin96/polymarket-predict-fun-tick-data)
+(unpacked) and
+[Hugging Face](https://huggingface.co/datasets/Ligengxin96/polymarket-predict-fun-tick-data)
+(original `.gz` files), under CC BY 4.0.
+
+同一个样例日（连同 Polymarket 那份）也发布在
+[Kaggle](https://www.kaggle.com/datasets/ligengxin96/polymarket-predict-fun-tick-data)（解压版）
+与 [Hugging Face](https://huggingface.co/datasets/Ligengxin96/polymarket-predict-fun-tick-data)
+（原样 `.gz`），协议 CC BY 4.0。
 
 > **The data is in the Release, not in the git tree.** Clicking *Code → Download
 > ZIP* gets you the documentation and nothing else. This is deliberate: a

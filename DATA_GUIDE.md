@@ -160,7 +160,7 @@ Periods 1s..1d are per-day files; 3d / 1w / 1mo ship as full-history snapshots
 named `-thru-<date>` and contain completed buckets only. Klines are derived
 from the price ticks above — you can always recompute them yourself.
 
-## manifest.json — file inventory with per-file row counts and sha256 checksums
+## samples/manifest.json — per-file row counts and sha256 checksums for this sample
 
 Every sample file here is byte-identical to the corresponding file in the paid
 dataset; the sha256 values match the archive's own checksum index.
